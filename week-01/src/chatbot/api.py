@@ -38,7 +38,9 @@ from src.chatbot.models import ChatMessage
 #   client = create_client()
 #
 # Your code here:
-# def create_client() -> ...:
+def create_client() -> OpenAI:
+    """Create an OpenAI client using the API key from settings."""
+    return OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # TODO: Implement get_chat_response function
@@ -90,6 +92,24 @@ from src.chatbot.models import ChatMessage
 #
 # Your code here:
 
+def get_chat_response(
+    client: OpenAI, messages: List[ChatMessage], model: str = settings.OPENAI_MODEL
+) -> ChatMessage:
+    """Send the conversation to OpenAI and return the assistant's reply."""
+    try:
+        message_dicts = [msg.model_dump() for msg in messages]
+        response = client.chat.completions.create(
+            model=model,
+            messages=message_dicts,
+        )
+        assistant_message = response.choices[0].message
+        return ChatMessage(
+            role=assistant_message.role,
+            content=assistant_message.content or "",
+        )
+    except Exception as e:
+        print(f"Error getting response from OpenAI: {e}")
+        raise
 
 # TODO: Implement create_system_message function (Helper Function)
 # This helper function creates the system message that defines the chatbot's personality.
@@ -105,4 +125,8 @@ from src.chatbot.models import ChatMessage
 #   system_msg = create_system_message()
 #
 # Your code here:
+
+def create_system_message() -> ChatMessage:
+    """Create the system message that sets the chatbot's personality."""
+    return ChatMessage(role="system", content=SYSTEM_PROMPT)
 
