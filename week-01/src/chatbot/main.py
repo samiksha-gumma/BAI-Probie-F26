@@ -54,7 +54,7 @@ def run_conversation_loop() -> None:
     """
     
     # TODO: Create OpenAI client
-    
+    client = create_client()
     
     # TODO: Initialize conversation history
     # Instructions:
@@ -63,6 +63,7 @@ def run_conversation_loop() -> None:
     # 3. This list will grow as the conversation progresses
     #
     # Hint: conversation_history should be a List[ChatMessage] type
+    conversation_history: List[ChatMessage] = [create_system_message()]
     
     
     ui.display_welcome()
@@ -85,13 +86,16 @@ def run_conversation_loop() -> None:
             
             # TODO: Create and store user message
             # Code here
+            conversation_history.append(ChatMessage(role="user", content=user_input))
             
             ui.display_loading()
             
             # TODO: Get AI response from OpenAI and display it
             # Code here
 
-            ui.display_assistant_message("NOT IMPLEMENTED YET")
+            assistant_message = get_chat_response(client, conversation_history)
+            conversation_history.append(assistant_message)
+            ui.display_assistant_message(assistant_message.content)
             
         except KeyboardInterrupt:
             ui.display_goodbye()
