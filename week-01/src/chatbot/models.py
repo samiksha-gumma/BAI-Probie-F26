@@ -33,6 +33,8 @@ from typing import Literal
 # Important: The role field should ONLY accept specific values!
 # We use Literal to restrict role to exactly: "user", "assistant", or "system"
 #
-class ChatMessage(BaseModel):
-    change_this_variables: str
+    """A single message in the conversation, in the format OpenAI expects."""
+
+    role: Literal["user", "assistant", "system"]
+    content: str
 
