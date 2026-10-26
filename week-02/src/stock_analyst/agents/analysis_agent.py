@@ -184,6 +184,43 @@ def get_current_vs_ma_position(ctx: RunContext[StockData]) -> dict[str, str]:
     return result
 
 
+@analysis_agent.tool
+def calculate_rsi(ctx: RunContext[StockData]) -> float | None:
+    """
+    Calculate the 14-day Relative Strength Index (RSI).
+
+    RSI measures how fast the price has been moving up or down, on a scale of 0-100.
+    - Above 70: the stock may be "overbought" (risen too fast)
+    - Below 30: the stock may be "oversold" (fallen too fast)
+    - Between 30 and 70: neutral
+
+    Args:
+        ctx: Run context containing StockData
+
+    Returns:
+        RSI value from 0 to 100, or None if there isn't enough data
+    """
+    prices = ctx.deps.price_history
+    debug_log('[agent: "analysis_agent"] [tool-call: "calculate_rsi"]')
+
+    period = 14
+    if len(prices) < period + 1:
+        return None
+
+    # Day-to-day price changes over the last 14 days
+    recent = prices[-(period + 1):]
+    changes = [recent[i] - recent[i - 1] for i in range(1, len(recent))]
+
+    # Split into gains and losses, then average each
+    avg_gain = sum(c for c in changes if c > 0) / period
+    avg_loss = sum(-c for c in changes if c < 0) / period
+
+    if avg_loss == 0:
+        return 100.0
+
+    rs = avg_gain / avg_loss
+    return round(100 - (100 / (1 + rs)), 2)
+
 async def analyze_stock(stock_data: StockData) -> TechnicalAnalysis:
     """
     Analyze stock data and produce a technical analysis report.
@@ -211,7 +248,7 @@ async def analyze_stock(stock_data: StockData) -> TechnicalAnalysis:
     result = await analysis_agent.run(
         f"Perform technical analysis on {stock_data.symbol}. "
         f"Use the available tools to calculate moving averages, support/resistance, "
-        f"volatility, and price trends. Then provide a structured analysis with "
+        f"volatility, RSI, and price trends. Then provide a structured analysis with "
         f"trend direction, trend strength, key levels, and a summary.",
         deps=stock_data,
     )
